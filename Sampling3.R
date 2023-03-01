@@ -33,7 +33,7 @@ PROBAB <- function(j,i,YY,TTheta,TTau){
   }
   q[i]=0
   }
-  ############# start: Calculate q0 --> q[n+1] ###########
+  ############# start: Calculate q0 --> q[n+1] ########### 
   
   invE = (TTau[[j]][i])*t(A[[j]])%*%A[[j]]+Lambda[[j]]*QSigmaTheta[[j]]
   E    = solve(invE)
