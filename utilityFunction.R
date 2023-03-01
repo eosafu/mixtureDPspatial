@@ -32,7 +32,7 @@ AGenerator <- function(dataa,datab,psi=1,c=NULL){
   #'c : truncation parameter
   #'Output
   #'Matrix A'
-  c = round(c)
+  c = round(c) 
   if (!is.null(c)){
   if (c < 0 )stop("Conditions: c>=0",'\n')
   }
