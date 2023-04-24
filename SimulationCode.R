@@ -10,8 +10,13 @@ library(tidyverse)
 library(truncnorm)
 ################
 rm(list=ls())
+# Load external functions
 source("utilityFunction.R")
 source("Sampling3.R")
+################
+#Simulate data
+################
+# Spatial dormain
 xy.xy <- expand.grid((1:150)/150, (1:150)/150)
 set.seed(1234456)
 # Data location
@@ -91,7 +96,8 @@ nsamp = 10
 Y1 =Y2= matrix(0,nrow(xy),300)
 #Y2=NULL
 e = 0.5
-
+e.prop=e
+# Simulate response variable
 for (i in 1:300) {
   
   Z1 = t(rmvn.sparse(1,(mu),CH1,prec=FALSE))
@@ -116,16 +122,19 @@ X1 = DATA[[4]][,TrainID]
 X2 = DATA[[5]][,TrainID]
 z1 = DATA[[6]][TrainID]
 z2 = DATA[[7]][TrainID]
-# Extract only location from the true field
-set.seed(1234)
+
+##################
+#Preparation for inference
+##################
+# Extract only the location from the true field
 datLoc1 <- DATA[[3]][TrainID,]
 datLoc2 <- DATA[[3]][TrainID,]
 set.seed(1234)
-# random location
+# Select random field location for the estimation process
 #SampleFieldLoc1 =  as.data.frame( cbind(sample(seq(0,1,0.001),170),sample(seq(0,1,0.001),170)))
 #SampleFieldLoc2 =  as.data.frame(cbind(sample(seq(0,1,0.001),170),sample(seq(0,1,0.001),170)))
 
-# Equidistant spatial field location 
+# Select Equidistant spatial field location for the estimation process
 samloc =expand.grid(seq(0.1,0.9,length.out=17),seq(0.1,0.9,length.out=10))
 SampleFieldLoc1 =  as.data.frame(samloc)
 SampleFieldLoc2 =  as.data.frame(samloc)
@@ -138,7 +147,7 @@ YY1 = Y1
 YY2 = Y2
 n1= nrow(YY1)
 n2= nrow(YY2)
-########### Artificial Set ######## would be rewritting latter
+########### Artificial Set ######## would be rewritting during estimation
 
 Y <- list(YY1,YY2)
 X= list(X1,X2)
@@ -207,8 +216,7 @@ SigmaTheta=list(SigmaTheta1,SigmaTheta2,SigmaTheta.sh)
 QSigmaTheta=list(solve(SigmaTheta1),solve(SigmaTheta2),solve(SigmaTheta.sh))
 SampleField = list(SampleFieldLoc1[,1:2],SampleFieldLoc2[,1:2],Loc.sh) # to be used to update kappa and nu
 
-# Probability between share and specific
-e.prop=e
+# Initialize probability between share and specific
 e=0.1
 
 # indicator variable
