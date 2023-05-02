@@ -142,6 +142,10 @@ SampleFieldLoc2 =  as.data.frame(samloc)
 # Determine projection matrix A
 A1 <- AGenerator(datLoc1,SampleFieldLoc1,psi=4,c=20)
 A2 <- AGenerator(datLoc2,SampleFieldLoc2,psi=4,c=20)
+A1 =A1/matrix(rowSums(A1),nrow=nrow(A1),ncol=ncol(A1))
+A1= as(A1,"sparseMatrix")
+A2 =A2/matrix(rowSums(A2),nrow=nrow(A2),ncol=ncol(A2))
+A2= as(A2,"sparseMatrix")
 
 YY1 = Y1
 YY2 = Y2
