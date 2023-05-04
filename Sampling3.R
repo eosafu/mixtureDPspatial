@@ -63,7 +63,7 @@ PROBAB <- function(j,i,YY,TTheta,TTau){
     muk = mu[[j]]+A[[j]]%*%TTheta[[3]][[j]][,k]
     CH  = as((TTau[[j]][i])^(-1)*Diagonal(ndata[[j]]),"sparseMatrix")
     CH     = Cholesky(CH) 
-    qsrex=c(qsrex,drop((1-e)*exp(dmvn.sparse(t(YY[[j]][,i]),muk,CH,prec=FALSE))))
+    qsrex=c(qsrex,drop((e)*exp(dmvn.sparse(t(YY[[j]][,i]),muk,CH,prec=FALSE))))
   }
   qs=qsrex 
   }
@@ -138,7 +138,7 @@ PROBAB0 <- function(j,i,YY,TTheta,TTau){
     qrex=c(qrex, 0)
     ###
   }else{
-    qrex=c(qrex, drop((1-e)*exp(dmvn.sparse(t(YY[[3]][[j]][,i]),muk,CH,prec=FALSE)))  )
+    qrex=c(qrex, drop((e)*exp(dmvn.sparse(t(YY[[3]][[j]][,i]),muk,CH,prec=FALSE)))  )
      }
   }
   qs[[jk]]=qrex
