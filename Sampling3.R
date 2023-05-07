@@ -1,12 +1,13 @@
 # Sampling functions
-PROBAB <- function(j,i,YY,TTheta,TTau){
-  # Fucntion to calculate probabilities for the ith example for all j
+PROBAB <- function(j,i,YY,TTheta,TTau,e){
+  # Function to calculate probabilities for the ith example for all j
   #Input:
   #'w is the the list of configuration
   #'i is the example we want to computes its probability
   # Output
   #' list of probabilities for all j and the i th example.
   #######################
+  ee=e
   YY[[j]]=as(YY[[j]],"sparseMatrix")
   YY[[3]][[j]]=as(YY[[3]][[j]],"sparseMatrix")
   TTheta[[j]] = as(TTheta[[j]],"sparseMatrix")
@@ -28,12 +29,12 @@ PROBAB <- function(j,i,YY,TTheta,TTau){
     muk = mu[[j]]+A[[j]]%*%TTheta[[j]][,k]
     CH  = as((TTau[[j]][i])^(-1)*Diagonal(ndata[[j]]),"sparseMatrix")
     CH     = Cholesky(CH) 
-    q[k]= drop((1-e)*exp(dmvn.sparse(t(YY[[j]][,i]),muk,CH,prec=FALSE)))
+    q[k]= max(0,(1/(n-1+alpha[[j]]))*drop((1-ee)*exp(dmvn.sparse(t(YY[[j]][,i]),muk,CH,prec=FALSE))))
   
   }
   q[i]=0
   }
-  ############# start: Calculate q0 --> q[n+1] ########### 
+  ############# start: Calculate q0 --> q[n+1] ###########
   
   invE = (TTau[[j]][i])*t(A[[j]])%*%A[[j]]+Lambda[[j]]*QSigmaTheta[[j]]
   E    = solve(invE)
@@ -46,7 +47,7 @@ PROBAB <- function(j,i,YY,TTheta,TTau){
   auxlogExp = -0.5*(d- t(W)%*%E%*%W)
   auxlognorm = (0.5)*((nrow(E))*log(6.283185)+logdet(as.matrix(E)))-(0.5)*log( det(6.283185*(TTau[[j]][i])^(-1)*Diagonal(ndata[[j]]) ))-
     (0.5)*((nrow(SigmaTheta[[j]]))*log((6.283185*Lambda[[j]]^(-1)))+logdet(as.matrix(SigmaTheta[[j]]) ) )
-  q[n+1]=drop(alpha[[j]]*(1-e)*exp(auxlognorm+auxlogExp))
+  q[n+1]=max(0,(1/(n-1+alpha[[j]]))*drop(alpha[[j]]*(1-ee)*exp(auxlognorm+auxlogExp)))
   ############ End: Calculate q0 --> q[n+1] #########
   
   ########### Calculate shared q---> qs
@@ -63,7 +64,7 @@ PROBAB <- function(j,i,YY,TTheta,TTau){
     muk = mu[[j]]+A[[j]]%*%TTheta[[3]][[j]][,k]
     CH  = as((TTau[[j]][i])^(-1)*Diagonal(ndata[[j]]),"sparseMatrix")
     CH     = Cholesky(CH) 
-    qsrex=c(qsrex,drop((e)*exp(dmvn.sparse(t(YY[[j]][,i]),muk,CH,prec=FALSE))))
+    qsrex=c(qsrex,drop(max(0,(1/(ns-1+alpha[[3]]))*ee*exp(dmvn.sparse(t(YY[[j]][,i]),muk,CH,prec=FALSE)))))
   }
   qs=qsrex 
   }
@@ -83,18 +84,18 @@ PROBAB <- function(j,i,YY,TTheta,TTau){
   auxlognorm = (0.5)*((nrow(E))*log(6.283185)+logdet(as.matrix(E)))-(0.5)*log( det(6.283185*(Tau[[j]][i])^(-1)*Diagonal(ndata[[j]]) ))-
     (0.5)*((nrow(SigmaTheta[[3]]))*log((6.283185*Lambda[[3]]^(-1)))+logdet(as.matrix(SigmaTheta[[3]])))
   if(test){
-    qs=drop(alpha[[3]]*e*exp(auxlognorm+auxlogExp))
+    qs= max(0,(1/(ns-1+alpha[[3]]))*drop(alpha[[3]]*ee*exp(auxlognorm+auxlogExp)))
     }else{
-      qs[ns+1]=drop(alpha[[3]]*e*exp(auxlognorm+auxlogExp))
+      qs[ns+1]=max(0,(1/(ns-1+alpha[[3]]))*drop(alpha[[3]]*ee*exp(auxlognorm+auxlogExp)))
     }
   
   
   return(list(q,qs))
 }
   
-# Funtion to update elements in the shared component. Jump across groups within the shared component
-PROBAB0 <- function(j,i,YY,TTheta,TTau){
-  # Fucntion to calculate probabilities for the ith example for all j
+# Function to update elements in the shared component. Jump across groups within the shared component
+PROBAB0 <- function(j,i,YY,TTheta,TTau,e){
+  # Function to calculate probabilities for the ith example for all j
   #Input:
   #'w is the the list of configuration
   #'i is the example we want to computes its probability
@@ -138,7 +139,7 @@ PROBAB0 <- function(j,i,YY,TTheta,TTau){
     qrex=c(qrex, 0)
     ###
   }else{
-    qrex=c(qrex, drop((e)*exp(dmvn.sparse(t(YY[[3]][[j]][,i]),muk,CH,prec=FALSE)))  )
+    qrex=c(qrex, max(0,(1/(nk[[jk]]-1+alpha[[3]]))*drop(ee*exp(dmvn.sparse(t(YY[[3]][[j]][,i]),muk,CH,prec=FALSE)))))
      }
   }
   qs[[jk]]=qrex
@@ -157,7 +158,7 @@ PROBAB0 <- function(j,i,YY,TTheta,TTau){
   auxlogExp = -0.5*(d- t(W)%*%E%*%W)
   auxlognorm = (0.5)*((nrow(E))*log(6.283185)+logdet(as.matrix(E)))-(0.5)*log( det(6.283185*(TTau[[3]][[j]][i])^(-1)*Diagonal(ndata[[j]]) ))-
     (0.5)*((nrow(SigmaTheta[[3]]))*log((6.283185*Lambda[[3]]^(-1)))+logdet(as.matrix(SigmaTheta[[3]]) ) )
-  qs[[3]]=drop(alpha[[j]]*(e)*exp(auxlognorm+auxlogExp))
+  qs[[3]]= max(0,(1/(nk[[jk]]-1+alpha[[3]]))*drop(alpha[[3]]*(ee)*exp(auxlognorm+auxlogExp)))
   ############ End: Calculate q00 #########
   
   ####################################################
@@ -178,7 +179,7 @@ PROBAB0 <- function(j,i,YY,TTheta,TTau){
     muk = mu[[j]]+A[[j]]%*%TTheta[[j]][,k]
     CH  = as((TTau[[3]][[j]][i])^(-1)*Diagonal(ndata[[j]]),"sparseMatrix")
     CH     = Cholesky(CH) 
-    qsrex=c(qsrex,drop((1-e)*exp(dmvn.sparse(t(YY[[3]][[j]][,i]),muk,CH,prec=FALSE)))  )
+    qsrex=c(qsrex,max(0,(1/(n-1+alpha[[j]]))*drop((1-ee)*exp(dmvn.sparse(t(YY[[3]][[j]][,i]),muk,CH,prec=FALSE))))  )
   }
   q=qsrex 
   }
@@ -198,9 +199,9 @@ PROBAB0 <- function(j,i,YY,TTheta,TTau){
   auxlognorm = (0.5)*((nrow(E))*log(6.283185)+logdet(as.matrix(E)))-(0.5)*log( det(6.283185*(TTau[[3]][[j]][i])^(-1)*Diagonal(ndata[[j]]) ))-
     (0.5)*((nrow(SigmaTheta[[j]]))*log((6.283185*Lambda[[j]]^(-1)))+logdet(as.matrix(SigmaTheta[[j]])))
   if(test){
-    q = drop(alpha[[j]]*(1-e)*exp(auxlognorm+auxlogExp))
+    q = max(0,(1/(n-1+alpha[[j]]))*drop(alpha[[j]]*(1-ee)*exp(auxlognorm+auxlogExp)))
   }else{
-    q[n+1]=drop(alpha[[j]]*(1-e)*exp(auxlognorm+auxlogExp))
+    q[n+1]=max(0,(1/(n-1+alpha[[j]]))*drop(alpha[[j]]*(1-ee)*exp(auxlognorm+auxlogExp)))
   }
   
   return(list(q,qs))
