@@ -250,7 +250,7 @@ QBeta[[2]]=Diagonal(length(Beta[[2]]),1/100000)
 # Prior variance for Beta
 QPhi =list()
 tau.phi=c(1/1000,1/1000)
-QPhi[[1]]=as(RW_2(ncol(B[[1]]),1),"sparseMatrix")#Diagonal(length(Phi[[1]]),1/10)   # PLEASE CHANGE TO RANDOM WALK PRIORS
+QPhi[[1]]=as(RW_2(ncol(B[[1]]),1),"sparseMatrix")#Diagonal(length(Phi[[1]]),1/10)
 QPhi[[2]]=as(RW_2(ncol(B[[2]]),1),"sparseMatrix")#Diagonal(length(Phi[[2]]),1/10)
 
 
