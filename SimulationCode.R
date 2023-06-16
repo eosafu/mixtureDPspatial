@@ -309,13 +309,13 @@ RESID <- vector("numeric",(Num-burn))
 while(count<Num){
   YY=TTheta=TTau=list()
   for (j in 1:length(w)) {
-    
+    # Sort specific from shared
     YY[[j]]=Y[[j]][,which(w[[j]]==0)]
     TTheta[[j]]=Theta[[j]][,which(w[[j]]==0)]
     TTau[[j]]  = Tau[[j]][which(w[[j]]==0)]
     
   }
-  
+  # Sort shared from specific: posit is the list index of the shared effect.
   YY[[posit]]=list(Y[[1]][,which(w[[1]]!=0)],Y[[2]][,which(w[[2]]!=0)])
   TTheta[[posit]]=list(Theta[[1]][,which(w[[1]]!=0)],Theta[[2]][,which(w[[2]]!=0)])
   TTau[[posit]]  = list(Tau[[1]][which(w[[1]]!=0)],Tau[[2]][which(w[[2]]!=0)])
