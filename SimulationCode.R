@@ -29,6 +29,7 @@ phi_k2     = 3.0
 phi_k3     = 5
 tau_1     = 0.2
 tau_2       =0.2
+# Compute nonstationary covariance
 sigma_Sx = sigma_sqr *( (xy[,1]-(max(xy[,1])-min(xy[,1]))/2)^2+
               (xy[,2]-(max(xy[,2])-min(xy[,2]))/2)^2 )
 sigma_S = ifelse(sigma_Sx<1,1,sigma_Sx)
@@ -57,7 +58,7 @@ CH3=Cholesky(SIGMA3)
 #  Z2 = t(rmvn.sparse(1,(mu),CH2,prec=FALSE))
 #  Z3 = t(rmvn.sparse(1,(mu),CH3,prec=FALSE))
 
-###
+# Fix fixed effect parameters and obtain design matrix
 n1=n2=nrow(xy)
 Beta1 <- matrix(c(2,-2,1))
 Beta2 <- matrix(c(3.5,1,-2.5,0.1))
@@ -113,7 +114,9 @@ for (i in 1:300) {
   }
   
 }
+# Store data
 DATA = list(Y1,Y2, xy, X1, X2,z1,z2)
+# Divid simulated locations and replication into train and testing
 TrainID = sample(1:150,100)
 TrainIDcol = sample(1:300,nsamp)
 Y1 = DATA[[1]][TrainID,TrainIDcol]
@@ -130,11 +133,11 @@ z2 = DATA[[7]][TrainID]
 datLoc1 <- DATA[[3]][TrainID,]
 datLoc2 <- DATA[[3]][TrainID,]
 set.seed(1234)
-# Select random field location for the estimation process
+# Select random locations for knot position
 #SampleFieldLoc1 =  as.data.frame( cbind(sample(seq(0,1,0.001),170),sample(seq(0,1,0.001),170)))
 #SampleFieldLoc2 =  as.data.frame(cbind(sample(seq(0,1,0.001),170),sample(seq(0,1,0.001),170)))
 
-# Select Equidistant spatial field location for the estimation process
+# Select Equidistant spatial knot location
 samloc =expand.grid(seq(0.1,0.9,length.out=17),seq(0.1,0.9,length.out=10))
 SampleFieldLoc1 =  as.data.frame(samloc)
 SampleFieldLoc2 =  as.data.frame(samloc)
@@ -151,7 +154,8 @@ YY1 = Y1
 YY2 = Y2
 n1= nrow(YY1)
 n2= nrow(YY2)
-########### Artificial Set ######## would be rewritting during estimation
+
+########### Artificial storage list ######## would be rewritten during estimation
 
 Y <- list(YY1,YY2)
 X= list(X1,X2)
@@ -203,14 +207,14 @@ nu=list((range[[1]]*kappa[[1]])^2/8,
 SigmaTheta1=cMatern(SampleFieldLoc1[,1:2],SampleFieldLoc1[,1:2],inc.dist=10,nu=nu[[1]],kappa=kappa[[1]],c=10) # Nearest-Neigb=10
 SigmaTheta2=cMatern(SampleFieldLoc2[,1:2],SampleFieldLoc2[,1:2],inc.dist=10,nu=nu[[2]],kappa=kappa[[2]],c=10) # Neares-Neigb=10
 
-# randomly draw shared field locations across the related studies
+# Randomly draw shared field locations across the related studies
 # to obtain the prior variance for the shared field
 #set.seed(123445)
 set.seed(34459999)
-# Random field location
+# Random knot locations
 #Loc.sh = as.data.frame (cbind(sample(seq(0,1,0.001),170),sample(seq(0,1,0.001),170)))
 #SigmaTheta.sh=cMatern(Loc.sh,Loc.sh,inc.dist=10,nu=nu[[3]],kappa=kappa[[3]],c=5) # Nearest-Neigb=5
-### Equidistant location
+### Equidistant knot locations
 # Equidistant field location 
 samloc =expand.grid(seq(0.07,0.95,length.out=17),seq(0.07,0.95,length.out=10))
 Loc.sh =  as.data.frame(samloc)
@@ -223,12 +227,12 @@ SampleField = list(SampleFieldLoc1[,1:2],SampleFieldLoc2[,1:2],Loc.sh) # to be u
 # Initialize probability between share and specific
 e=0.1
 
-# indicator variable
+# sample initial indicator variable
 w=list()
 w[1][[1]]=sample(c(0,1),nsamp,prob = c(0.5,0.5),replace = TRUE)
 w[2][[1]]=sample(c(0,1),nsamp,prob = c(0.5,0.5),replace = TRUE)
 
-# likelihood variance for each j,i
+# sample initial likelihood variance for each j,i
 Tau1=rgamma(nsamp,shape = 0.5,rate = 2)
 Tau2=rgamma(nsamp,shape = 0.5,rate = 2)
 
@@ -247,7 +251,7 @@ QBeta =list()
 QBeta[[1]]=Diagonal(length(Beta[[1]]),1/100000)
 QBeta[[2]]=Diagonal(length(Beta[[2]]),1/100000)
 
-# Prior variance for Beta
+# Prior variance for Phi
 QPhi =list()
 tau.phi=c(1/1000,1/1000)
 QPhi[[1]]=as(RW_2(ncol(B[[1]]),1),"sparseMatrix")#Diagonal(length(Phi[[1]]),1/10)
@@ -381,7 +385,7 @@ while(count<Num){
       
     } # end i
   } #end j
-  
+  # From shared to specific
   ww0=list(integer(),integer(),integer())
   
   for (j in 1:2) {
@@ -449,7 +453,7 @@ while(count<Num){
     #  } # end if
     
   }# end j
-  
+  # Reconfigure replication positions based on the recent updates
   if(length(ww[[1]])==nsamp){
     w[[1]]=c(ww[[1]])
   }else if(length(ww0[[1]])==nsamp){
@@ -530,7 +534,7 @@ while(count<Num){
                   id1=c(ID3[[1]],ID3[[2]]))
   ##########################
   
-  # Update cluster effects
+  # Update cluster effects (Remixing-stage)
   mu=lapply(1:length(w), function(j)t(X[[j]])%*%Beta[[j]]+B[[j]]%*%Phi[[j]])
   for (j in 1:length(w)) {
     
@@ -693,7 +697,7 @@ while(count<Num){
       }
     }
   }
-  # Update precision for nonlinear effect
+  # Update precision for the nonlinear effect
   
   #for (j in 1:length(w)) {
   # tau.phi[j] = rgamma(1,0.5*nrow(Phi[[j]])+a.tauphi , drop(0.5*t(Phi[[j]])%*%QPhi[[j]]%*%Phi[[j]]+b.tauphi) )
@@ -712,7 +716,7 @@ while(count<Num){
   e  = rbeta(1,N1+a.e,N0+b.e)
   # }
   
-  ### Update kappa and nu
+  ### Update kappa and nu (Please note: truncated normal was used as the proposal. For the real data analysis, the adaptive M-H was used)
   # Update all kappa and nu
   # and Update all prior variance
   
@@ -722,8 +726,8 @@ while(count<Num){
   ####
   test = TRUE
   while(test){
-  kappa0.new = rtruncnorm(1,a=0,b=Inf, mean = kappa[[3]], sd=0.3)
-  nu0.new    = rtruncnorm(1,a=0,b=Inf, mean = nu[[3]],    sd=0.3)
+  kappa0.new = rtruncnorm(1,a=0,b=Inf, mean = kappa[[3]], sd=2.34^2 * 2^(-1))
+  nu0.new    = rtruncnorm(1,a=0,b=Inf, mean = nu[[3]],    sd=2.34^2 * 2^(-1))
   ####
   Sigmarex0.new=cMatern(SampleField[[3]],SampleField[[3]],inc.dist=10,nu=nu0.new,kappa=kappa0.new,c=5)
   if(det(Sigmarex0.new)>0){
@@ -739,8 +743,8 @@ while(count<Num){
   for (j in 1:length(w)) {
     test = TRUE
     while(test){
-    kappa.new = rtruncnorm(1,a=0,b=Inf, mean = kappa[[j]], sd=0.3)
-    nu.new    = rtruncnorm(1,a=0,b=Inf, mean = nu[[j]],    sd=0.3)
+    kappa.new = rtruncnorm(1,a=0,b=Inf, mean = kappa[[j]], sd=2.34^2 * 2^(-1))
+    nu.new    = rtruncnorm(1,a=0,b=Inf, mean = nu[[j]],    sd=2.34^2 * 2^(-1))
     Sigmarexj.new=cMatern(SampleField[[j]],SampleField[[j]],inc.dist=10,nu=nu.new,kappa=kappa.new,c=5)
     if(det(Sigmarexj.new)>0){
       CH.new      = Cholesky(Lambda[[j]]^(-1)*Sigmarexj.new)
@@ -767,9 +771,9 @@ while(count<Num){
     # Update kj,nuj here
     
     xi= auxj.new+dlnorm(kappa.new,kappa.mu,kappa.sig,log = TRUE)+dlnorm(nu.new,nu.mu,nu.sig,log = TRUE)+ 
-      log(dtruncnorm(kappa[[j]],a=0,b=Inf, mean = kappa.new, sd=0.3))+ log(dtruncnorm(nu[[j]],a=0,b=Inf, mean = nu.new, sd=0.3))-
+      log(dtruncnorm(kappa[[j]],a=0,b=Inf, mean = kappa.new, sd=2.34^2 * 2^(-1)))+ log(dtruncnorm(nu[[j]],a=0,b=Inf, mean = nu.new, sd=2.34^2 * 2^(-1)))-
       auxj-dlnorm(kappa[[j]],kappa.mu,kappa.sig,log = TRUE)-dlnorm(nu[[j]],nu.mu,nu.sig,log = TRUE)-
-      log(dtruncnorm(kappa.new,a=0,b=Inf, mean = kappa[[j]], sd=0.3))-log(dtruncnorm(nu.new,a=0,b=Inf, mean = nu[[j]], sd=0.3))
+      log(dtruncnorm(kappa.new,a=0,b=Inf, mean = kappa[[j]], sd=2.34^2 * 2^(-1)))-log(dtruncnorm(nu.new,a=0,b=Inf, mean = nu[[j]], sd=2.34^2 * 2^(-1)))
     xi= min(1,exp(xi))
     U=runif(1)
     if(U<xi){
@@ -785,9 +789,9 @@ while(count<Num){
   # Update kappa[[3]] and nu[[3]]
   
   xi0= aux0.new+dlnorm(kappa0.new,kappa.mu,kappa.sig,log = TRUE)+dlnorm(nu0.new ,nu.mu,nu.sig,log = TRUE)+ 
-    log(dtruncnorm(kappa[[3]],a=0,b=Inf, mean = kappa0.new, sd=0.3))+ log(dtruncnorm(nu[[3]],a=0,b=Inf, mean = nu0.new, sd=0.3))-
+    log(dtruncnorm(kappa[[3]],a=0,b=Inf, mean = kappa0.new, sd=2.34^2 * 2^(-1)))+ log(dtruncnorm(nu[[3]],a=0,b=Inf, mean = nu0.new, sd=2.34^2 * 2^(-1)))-
     aux0-dlnorm(kappa[[3]],kappa.mu,kappa.sig,log = TRUE)-dlnorm(nu[[3]],nu.mu,nu.sig,log = TRUE)-
-    log(dtruncnorm(kappa0.new,a=0,b=Inf, mean = kappa[[3]], sd=0.3))-log(dtruncnorm(nu0.new,a=0,b=Inf, mean = nu[[3]], sd=0.3))
+    log(dtruncnorm(kappa0.new,a=0,b=Inf, mean = kappa[[3]], sd=2.34^2 * 2^(-1)))-log(dtruncnorm(nu0.new,a=0,b=Inf, mean = nu[[3]], sd=2.34^2 * 2^(-1)))
   xi0= min(1,exp(xi0))
   U=runif(1)
   if(U<xi0){
